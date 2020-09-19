@@ -178,7 +178,7 @@
   }
 
   function logWork (worklog, date) {
-    worklog.started = date + 'T10:30:00.075" + getTZOffset(); // TODO: refactor to expected date format
+    worklog.started = date + 'T10:30:00.075' + getTZOffset(); // TODO: refactor to expected date format
 
     var url = `${jiraOptions.jiraUrl}/rest/api/2/issue/${worklog.jira}/worklog`
     var config = {
