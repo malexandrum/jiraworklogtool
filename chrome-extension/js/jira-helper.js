@@ -165,8 +165,20 @@
     })
   }
 
+  function getTZOffset() {
+    var minutesOffset = (new Date()).getTimezoneOffset();
+    var hoursOffset = minutesOffset / 60;
+    var fullHours = Math.floor(hoursOffset);
+    var fullMinutes = Math.round((hoursOffset - fullHours) * 60);
+    if (minutesOffset < 0) {
+      fullHours += 1;
+      fullMinutes = -fullMinutes;
+    }
+    return (fullHours >= 0 ? "-" : "+") + fullHours.toString().padStart(2, "0") + fullMinutes.toString().padStart(2, "0");
+  }
+
   function logWork (worklog, date) {
-    worklog.started = date + 'T06:00:00.075+0000' // TODO: refactor to expected date format
+    worklog.started = date + 'T10:30:00.075" + getTZOffset; // TODO: refactor to expected date format
 
     var url = `${jiraOptions.jiraUrl}/rest/api/2/issue/${worklog.jira}/worklog`
     var config = {
