@@ -201,7 +201,7 @@ window.View.Table = (function () {
     var row = worklogTableRowTemplate
       .replace('{{jiraNumber}}', worklogItem.jira)
       .replace('{{timeSpent}}', worklogItem.timeSpent)
-      .replace('{{comment}}', worklogItem.comment)
+      .replace('{{comment}}', worklogItem.comment || "")
       .replace('{{status}}', worklogItem.status)
       .replace('{{logId}}', worklogItem.logId)
       .replace('{{status-class}}', getStatusClass(worklogItem.status))
