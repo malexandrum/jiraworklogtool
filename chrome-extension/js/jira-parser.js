@@ -63,9 +63,9 @@ var JiraParser = (function () {
     if (!isValidTimeSpentFormat(item.timeSpent)) {
       result.push('timeSpent')
     }
-    if (!item.comment.trim()) {
-      result.push('comment')
-    }
+    // if (!item.comment.trim()) {
+    //   result.push('comment')
+    // }
     return result
   }
 

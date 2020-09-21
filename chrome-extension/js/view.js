@@ -81,7 +81,7 @@ window.View.Main = (function () {
         Controller.LogController.save(items, worklogDateInput.value)
           .then(getWorklogItemsFromDate)
           .then(() => {
-            alert('Worklog saved.')
+            //alert('Worklog saved.')
           }).catch(error => {
             alert('Some items were not saved. Make sure the Jira numbers exist, and you are logged in Jira.')
             console.warn(error)
