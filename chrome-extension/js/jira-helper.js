@@ -6,9 +6,9 @@
   }
   var jiraOptions = {}
 
-  function searchForWorklogKeysByDate (worklogDate) {
+  function searchForWorklogKeysByDate(worklogDate) {
     return new Promise((resolve, reject) => {
-      var fields = 'fields=fields,key'
+      var fields = 'fields=fields,key,parent'
       var jql = `jql=worklogDate='${worklogDate}' AND worklogAuthor=currentUser()`
       var url = jiraOptions.jiraUrl + '/rest/api/2/search?' + fields + '&' + jql
 
@@ -23,14 +23,14 @@
           var item = response.issues[i]
           keys.push(item.key)
         }
-        resolve(keys)
+        resolve({ keys, issues: response.issues })
       }).catch((error) => {
         reject(error)
       })
     })
   }
 
-  function testConnection (options) {
+  function testConnection(options) {
     return new Promise((resolve, reject) => {
       var fields = 'fields=fields,key'
       var jql = `jql=worklogAuthor=currentUser()`
@@ -63,7 +63,7 @@
     })
   }
 
-  function request (config) {
+  function request(config) {
     return new Promise((resolve, reject) => {
       // console.log(config)
       axios(config).then(response => {
@@ -89,19 +89,19 @@
     })
   }
 
-  function setUserFromHeader (headers) {
+  function setUserFromHeader(headers) {
     let userFromHeader
     if (headers['x-aaccountid']) { userFromHeader = headers['x-aaccountid'].toLowerCase() } else { userFromHeader = headers['x-ausername'].toLowerCase() }
 
     user = decodeURIComponent(userFromHeader)
   }
 
-  function isWorklogFromUser (worklog) {
+  function isWorklogFromUser(worklog) {
     return (worklog.author.accountId && worklog.author.accountId.toLowerCase() === (user || jiraOptions.user)) ||
-             (worklog.author.key && worklog.author.key.toLowerCase() === (jiraOptions.user || user))
+      (worklog.author.key && worklog.author.key.toLowerCase() === (jiraOptions.user || user))
   }
 
-  function getDetailedWorklogFromIssue (key) {
+  function getDetailedWorklogFromIssue(key) {
     var url = `${jiraOptions.jiraUrl}/rest/api/2/issue/${key}/worklog`
     var config = {
       headers: headers,
@@ -111,7 +111,7 @@
     return request(config)
   }
 
-  function getWorklogObjects (key, worklogs) {
+  function getWorklogObjects(key, worklogs) {
     return new Promise((resolve) => {
       // console.log(`key: ${key}`, worklogs);
       var worklogObjectArray = []
@@ -129,7 +129,7 @@
     })
   }
 
-  function getDetailedWorklogs (keys, worklogDate) {
+  function getDetailedWorklogs(keys, worklogDate) {
     return new Promise((resolve, reject) => {
       var promises = []
       var worklogsObjectArray = []
@@ -141,7 +141,7 @@
           // filter worklogs by 'started' date and user author
           var worklogs = response.worklogs.filter((worklog) => {
             return worklog.started.indexOf(worklogDate) > -1 &&
-                            isWorklogFromUser(worklog)
+              isWorklogFromUser(worklog)
           })
           var promise = getWorklogObjects(key, worklogs)
           promises.push(promise)
@@ -159,9 +159,14 @@
     })
   }
 
-  function getWorklog (worklogDate) {
-    return searchForWorklogKeysByDate(worklogDate).then((keys) => {
-      return getDetailedWorklogs(keys, worklogDate)
+  function getWorklog(worklogDate) {
+    return searchForWorklogKeysByDate(worklogDate).then(({ keys, issues }) => {
+      return new Promise(resolve => {
+        getDetailedWorklogs(keys, worklogDate)
+          .then(logs => {
+            resolve({ detailedWorklog: logs, issues });
+          })          
+      });      
     })
   }
 
@@ -177,7 +182,7 @@
     return (fullHours >= 0 ? "-" : "+") + fullHours.toString().padStart(2, "0") + fullMinutes.toString().padStart(2, "0");
   }
 
-  function logWork (worklog, date) {
+  function logWork(worklog, date) {
     worklog.started = date + 'T10:30:00.075' + getTZOffset(); // TODO: refactor to expected date format
 
     var url = `${jiraOptions.jiraUrl}/rest/api/2/issue/${worklog.jira}/worklog`
@@ -198,7 +203,7 @@
     })
   }
 
-  function updateWorklog (worklog) {
+  function updateWorklog(worklog) {
     worklog = {
       comment: worklog.comment,
       jira: worklog.jira,
@@ -224,7 +229,7 @@
     })
   }
 
-  function deleteWorklog (worklog) {
+  function deleteWorklog(worklog) {
     worklog = {
       comment: worklog.comment,
       jira: worklog.jira,
@@ -245,7 +250,7 @@
     })
   }
 
-  function configureHeaders (jiraOptions) {
+  function configureHeaders(jiraOptions) {
     if (jiraOptions.user && jiraOptions.password) {
       var b64 = btoa(`${jiraOptions.user}:${jiraOptions.password}`)
       headers.Authorization = `Basic ${b64}`
@@ -255,18 +260,22 @@
     }
   }
 
-  function setJiraOptions (options) {
+  function setJiraOptions(options) {
     jiraOptions = options
     configureHeaders(options)
     // console.log(jiraOptions);
   }
 
-  function getJiraUrl (jiraNumber) {
+  function getJiraUrl(jiraNumber) {
     if (!jiraNumber) { return '' }
     return `${jiraOptions.jiraUrl}/browse/${jiraNumber}`
   }
 
-  function init () {
+  function getJiraParent(key, worglogItem) {
+    // TODO for showing parent details for new worklog items
+  }
+
+  function init() {
     return new Promise((resolve, reject) => {
       chrome.storage.sync.get(
         {

@@ -4,11 +4,6 @@
 <head>
   <title>Jira Worklog Helper</title>
 
-  <!-- Google Tag Manager -->
-  <script src="js/gtm-head.js"></script>
-  <script src="js/gtm-tags.js"></script>
-  <!-- End Google Tag Manager -->
-
   <link rel="stylesheet" href="styles.css">
 
   <!--
@@ -28,11 +23,7 @@
   <script src="js/popup.js"></script>
 </head>
 
-<body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MZ6T8MS"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
+<body>  
   <div id="container" class="container">
     <h1>Jira Worklog Tool</h1>
     <section>
@@ -53,6 +44,8 @@
         <tr class='worklog worklog--edited' data-status="edited" data-id="123">
           <td class="table-line jira-number-column-item">
             <input name="jira" type="text" value="CMS-123" class="input--invalid jira-number-input"/>
+            <br />
+            <div class="jira-parent-issue">parent here</div>
           </td>
           <td class="table-line time-spent-column-item">
             <input name="timeSpent" type="text" value="2h" class="time-spent-input"/>

@@ -93,7 +93,6 @@ window.View.Main = (function () {
       worklogDateInput.addEventListener(
         'input',
         () => {
-          console.log('date changed: ' + worklogDateInput.value)
           setLoadingStatus(true)
           getWorklogItemsFromDate().then(() => {
 
@@ -173,6 +172,8 @@ window.View.Table = (function () {
     <tr class="worklog {{status-class}}" data-status="{{status}}" data-id="{{logId}}">
         <td class="table-line jira-number-column-item">
             <input name="jira" type="text" value="{{jiraNumber}}" class="jira-number-input" />
+            <br />
+            <div class="jira-parent-issue">{{jiraParent}}</div>
         </td>
         <td class="table-line time-spent-column-item">
             <input name="timeSpent" type="text" value="{{timeSpent}}" pattern="(\d+[m]|\d+[h](?:\s\d+[m])?)" class="time-spent-input" />
@@ -198,6 +199,7 @@ window.View.Table = (function () {
   }
 
   function addRow (worklogItem) {
+    const parentInfo = worklogItem.parentKey || worklogItem.parentSummary ? `${worklogItem.parentKey}: ${worklogItem.parentSummary}` : '';
     var row = worklogTableRowTemplate
       .replace('{{jiraNumber}}', worklogItem.jira)
       .replace('{{timeSpent}}', worklogItem.timeSpent)
@@ -207,6 +209,7 @@ window.View.Table = (function () {
       .replace('{{status-class}}', getStatusClass(worklogItem.status))
       .replace('{{jiraUrl}}', worklogItem.jiraUrl)
       .replace('{{link-disabled}}', worklogItem.jiraUrl ? '' : 'link-disabled')
+      .replace('{{jiraParent}}', parentInfo);
     tbody.innerHTML += row
   }
 

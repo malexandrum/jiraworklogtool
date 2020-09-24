@@ -1,33 +1,52 @@
 window.Controller = window.Controller || {}
 window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
   'use strict'
-  function init () {
+  function init() {
     return JiraHelper.init()
   }
 
-  function getWorklogsByDay (worklogDate) {
+  function getWorklogsByDay(worklogDate) {
     return new Promise((resolve, reject) => {
       var p = Model.WorklogModel.getUnsavedWorklogFromLocal(worklogDate)
       p.then(items => {
         Model.WorklogModel.clearItems()
         Model.WorklogModel.updateItemsWithLocalData(items)
         JiraHelper.getWorklog(worklogDate)
-          .then(worklogItems => {
-            worklogItems.forEach(item => {
-              item.jiraUrl = JiraHelper.getJiraUrl(item.jira)
+          .then(({ detailedWorklog, issues }) => {
+            const issuesWithParents = makeIssuesWithParents(issues);
+            detailedWorklog.forEach(item => {
+              item.jiraUrl = JiraHelper.getJiraUrl(item.jira);
+              if (issuesWithParents[item.jira]) {
+                item.parentKey = issuesWithParents[item.jira].key;
+                item.parentSummary = issuesWithParents[item.jira].summary;
+              }
             })
-            Model.WorklogModel.updateItemsFromJira(worklogItems)
+            Model.WorklogModel.updateItemsFromJira(detailedWorklog)
             resolve()
           })
           .catch(error => {
             reject(error)
           })
-          .then(() => {})
+          .then(() => { })
       })
     })
   }
 
-  function getFromText (worklogItemsText) {
+  function makeIssuesWithParents(issues) {
+    if (!issues || !issues.length) {
+      return undefined;
+    }
+    var result = {};
+    issues.forEach(issue => {
+      result[issue.key] = { 
+        key: issue.fields && issue.fields.parent && issue.fields.parent.key,
+        summary: issue.fields && issue.fields.parent && issue.fields.parent.fields && issue.fields.parent.fields.summary
+      }
+    });
+    return result;
+  }
+
+  function getFromText(worklogItemsText) {
     var arr = worklogItemsText.split('\n')
     var result = []
     for (var i = 0; i < arr.length; i++) {
@@ -39,7 +58,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
     return result
   }
 
-  function bulkInsert (worklogItemsText) {
+  function bulkInsert(worklogItemsText) {
     return new Promise((resolve) => {
       var worklogItems = getFromText(worklogItemsText)
       Model.WorklogModel.addAll(worklogItems)
@@ -47,7 +66,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
     })
   }
 
-  function save (items, date) {
+  function save(items, date) {
     return new Promise((resolve) => {
       console.log(items)
       var promises = []
@@ -75,7 +94,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
               .catch(error => {
                 console.error('controller.save update', error, item)
               })
-              .then(() => {})
+              .then(() => { })
             promises.push(promise)
             break
           case 'new':
@@ -88,7 +107,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
               .catch(error => {
                 console.error('controller.save insert', error, item)
               })
-              .then(() => {})
+              .then(() => { })
             promises.push(promise)
             break
           case 'deleted':
@@ -101,7 +120,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
               .catch(error => {
                 console.error('controller.save delete', error, item)
               })
-              .then(() => {})
+              .then(() => { })
             promises.push(promise)
             break
           default:
@@ -124,7 +143,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
     })
   }
 
-  function persistUnsavedData (date, items) {
+  function persistUnsavedData(date, items) {
     return Model.WorklogModel.persistUnsavedWorklogToLocal(date, items)
       .then(() => {
         Model.WorklogModel.clearItems()
@@ -132,7 +151,7 @@ window.Controller.LogController = (function (JiraHelper, Model, JiraParser) {
       })
   }
 
-  function getInvalidFields (worklog) {
+  function getInvalidFields(worklog) {
     return JiraParser.getInvalidFields(worklog)
   }
 
